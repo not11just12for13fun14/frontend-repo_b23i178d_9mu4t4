@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import ActionGrid from './components/ActionGrid';
 import CreationModal from './components/CreationModal';
@@ -37,15 +37,28 @@ function App() {
       recog.interimResults = false;
       recog.maxAlternatives = 1;
       recog.onresult = (e) => {
-        const text = e.results[0][0].transcript || '';
-        setModal('writer');
+        const text = (e.results[0][0].transcript || '').toLowerCase();
+        // Map voice keywords to modes
+        const map = [
+          { mode: 'web', keys: ['website', 'site', 'web'] },
+          { mode: 'chat', keys: ['chatbot', 'bot', 'chat'] },
+          { mode: 'images', keys: ['image', 'images', 'photo', 'picture'] },
+          { mode: 'writer', keys: ['write', 'writer', 'essay', 'poem', 'email', 'resume', 'letter', 'application'] },
+          { mode: 'qa', keys: ['question', 'questions', 'answer', 'q and a', 'solve'] },
+          { mode: 'convert', keys: ['convert', 'converter', 'code'] },
+        ];
+        let chosen = 'writer';
+        for (const m of map) {
+          if (m.keys.some((k) => text.includes(k))) { chosen = m.mode; break; }
+        }
+        setModal(chosen);
         setTimeout(() => {
           const input = document.querySelector('input[placeholder^="Describe"]');
           if (input) {
             input.value = text;
             input.dispatchEvent(new Event('input', { bubbles: true }));
           }
-        }, 50);
+        }, 80);
       };
       recog.start();
     } catch (e) {
